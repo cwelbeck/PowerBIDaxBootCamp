@@ -1,0 +1,727 @@
+
+###@@@@@@ PRAGMATIC WORKS YEARLY SUBSCRIPTION PROMO CODE
+Mitchell20
+
+
+
+
+
+
+*** Row Context
+*** Filter Context
+*** Evaluation Context
+
+
+
+Radacad – Helps identity attributes that are not being used so the attributes can be removed from the data model.
+https://radacad.com/
+
+Power BI Sentinel - Helps identity attributes that are not being used so the attributes can be removed from the data model.
+https://www.powerbisentinel.com/
+
+RIGHT(0 & 'Date'[MonthNumberOfYear], 2) & "-" & 'Date'[CalendarYear]
+
+FORMAT(‘Date’[Date]
+
+
+
+
+Age = 
+IF(
+    FORMAT('Customer'[BirthDate], "mmdd") <= FORMAT(TODAY(), "mmdd"), 
+    DATEDIFF('Customer'[BirthDate].[Date], TODAY(), YEAR),
+    DATEDIFF('Customer'[BirthDate].[Date], TODAY(), YEAR) -1)
+	
+	
+# Create a Key Column
+TemperatureKey = 
+RELATED('Sales Territory'[SalesTerritoryRegion]) &
+RELATED('Date'[MonthNumberOfYear])
+
+
+Last Purchase Date =
+// 1) X operator interates the table, returning the expression.
+// 2) Then the aggregation is performed over the result set.
+MAXX(
+RELATEDTABLE('Internet Sales'),
+'Internet Sales'[OrderDate])
+
+
+
+Sales by Region = 
+SUMX(
+    RELATEDTABLE('Internet Sales'),
+    'Internet Sales'[SalesAmount])
+	
+
+
+Region Volume = 
+
+SWITCH(TRUE(),
+    'Sales Territory'[Sales by Region] >= 5000000, "High Volume",
+    'Sales Territory'[Sales by Region] >= 2000000, "Medium Volume",
+    'Sales Territory'[Sales by Region] >= 1, "Low Volume",
+    "NA"
+    )
+	
+	
+	
+-------------------------------
+
+Measure
+
+
+Total Quantity = 
+
+SUM('Internet Sales'[OrderQuantity])
+
+// TOTAL QUANTITY *** WITHIN THE CURRENT FILTER CONTEXT ***
+
+
+Total Transactions = 
+COUNTROWS( 'Internet Sales' )
+
+// Total Count of Rows from the Internet Sales Table 
+// ***Within the Current Filter Context
+
+
+
+Total Sales = 
+SUM('Internet Sales'[SalesAmount])
+
+// Total Sales within the current filter context
+
+
+
+Total Cost = 
+
+SUM('Internet Sales'[TotalProductCost])
+
+
+
+
+Profit Margin = 
+DIVIDE(
+    [Profit],
+    [Total Sales])
+	
+	
+	
+Total Sales (US) =
+// RETURN [Total Sales] for the United States.
+
+CALCULATE(
+[Total Sales],
+'Sales Territory'[SalesTerritoryCountry] = "United States")
+
+
+
+Total Sales (All Countries) = 
+// Return [Total Sales] for ALL COUNTRIES
+
+IF(
+[Total Sales] = BLANK(),
+BLANK(),
+CALCULATE(
+[Total Sales],
+REMOVEFILTERS('Sales Territory'[SalesTerritoryCountry])))
+
+
+
+Total Sales (NA) = 
+// RETURN [Total Sales] for the United States.
+
+CALCULATE(
+[Total Sales], 
+'Sales Territory'[SalesTerritoryCountry] 
+IN {
+"United States", 
+"Canada"} )
+
+
+
+// REMOVEFILTERS() -- Removes filters
+// ALL()           -- Removes filters
+
+
+// CTRL // comments and uncomments
+// CTRL + K + C (Comment Code)
+// CTRL + K + U (Uncomment Code)
+	
+
+
+
+
+// *** Never Ever turn on BiDirectional Relationship between tables
+// *** Use CrossFilter instead of BiDirectional Relationship
+
+
+Total Customers = 
+CALCULATE(
+COUNTROWS('Customer'),
+CROSSFILTER('Internet Sales'[CustomerKey], 'Customer'[CustomerKey], Both))
+
+
+
+
+Prior Year Sales =
+
+
+CALCULATE(
+[Total Sales],
+SAMEPERIODLASTYEAR('Date'[Date])
+)
+
+// SAMEPERIODLASTYEAR IS DERIVED FROM DATEADD
+// PREVIOUSYEAR IS DERIVED FROM PARALLELPERIOD
+
+
+
+
+
+Current Quarter Sales =
+
+
+CALCULATE(
+[Total Sales],
+PARALLELPERIOD(
+'Date'[Date], 0, QUARTER)
+)
+
+
+
+YTD Sales = 
+TOTALYTD(
+    [Total Sales],
+    'Date'[Date])
+
+
+Fiscal YTD =
+TOTALYTD(
+[Total Sales],
+'Date'[Date],
+"06/30")
+
+
+4-4-5
+
+
+
+
+average = TOTALYTD(AVERAGE(Table2[Value]),Table2[Date])
+
+Prior = CALCULATE(Table2[average],SAMEPERIODLASTYEAR(Table2[Date]))
+
+Pior YTD = CALCULATE(TOTALYTD, SAMEPERIODLASTYEAR('Date'[Date])
+
+
+
+
+######@@@@@@ Rolling 12 Month Total
+
+[11:36 AM] Mitchell Pearson
+    
+Rolling 12 Month Sales = 
+VAR StartDate = NEXTDAY(SAMEPERIODLASTYEAR(LASTDATE('Date'[Date])))
+VAR EndDate = LASTDATE('Date'[Date])
+RETURN
+CALCULATE(
+[Total Sales],
+DATESBETWEEN(
+'Date'[Date],
+StartDate,
+EndDate))
+
+
+
+
+
+https://www.sqlbi.com/articles/rolling-12-months-average-in-dax/
+
+
+######@@@@@@ Rolling 12 Month Average =
+
+VAR NumOfMonths = 12
+VAR LastCurrentDate =
+    MAX ( 'Date'[Date] )
+VAR Period =
+    DATESINPERIOD ( 'Date'[Date], LastCurrentDate, - NumOfMonths, MONTH )
+[dax]
+ 
+Once the time period is computed, we only need to extend the current filter context with the period and to compute the monthly average of sales:
+ 
+[dax]
+Sales R12M =
+VAR NumOfMonths = 12
+VAR LastCurrentDate =
+    MAX ( 'Date'[Date] )
+VAR Period =
+    DATESINPERIOD ( 'Date'[Date], LastCurrentDate, - NumOfMonths, MONTH )
+VAR Result =
+    CALCULATE (
+        AVERAGEX (
+            VALUES ( 'Date'[Calendar Year Month] ),
+            [Sales Amount]
+        ),
+        Period
+    )
+VAR FirstDateInPeriod = MINX ( Period, 'Date'[Date] )
+VAR LastDateWithSales = MAX ( Sales[Order Date] )
+RETURN
+    IF ( FirstDateInPeriod <= LastDateWithSales, Result )
+	
+
+VAR Result =
+    CALCULATE (
+        AVERAGEX (
+            VALUES ( 'Date'[Date] ),
+            [Sales Amount]
+        ),
+        Period
+    )
+
+
+
+
+
+
+Avg 3 Month Sales (Values) = 
+VAR EndDate = LASTDATE('Date'[Date])
+
+RETURN
+CALCULATE(
+
+// 3a) Iterate over the virtual table and return the total sale for each month
+// 3b) Once the X iteration has completed, return the average sales from the virtual table.
+AVERAGEX(
+// 2) Return the distinct list of Months for the Modified Filter Context (See Step 1)
+VALUES('Date'[EnglishMonthName]),
+[Total Sales]),
+// 1) Modify the Filter Context to return the last 3 months.
+DATESINPERIOD(
+'Date'[Date],
+EndDate,
+-3,
+MONTH))
+
+
+
+
+CONCATENATEX(
+
+VALUES('Date'[EnglishMonthName]),
+
+'Date'[EnglishMonthName], "-"),
+
+
+
+
+VAR EndDate = LASTDATE('Date'[Date])
+
+
+
+RETURN
+
+CALCULATE(
+
+
+
+AVERAGEX(
+
+SUMMARIZE(
+
+'Date',
+
+'Date'[CalendarYear],
+
+'Date'[EnglishMonthName]),
+
+[Total Sales]),
+
+DATESINPERIOD(
+
+'Date'[Date],
+
+EndDate,
+
+-3,
+
+MONTH))
+
+
+
+
+
+7 Day Average =
+
+
+
+VAR EndDate = LASTDATE('Date'[Date])
+
+VAR StartDate = DATEADD(LASTDATE('Date'[Date]), -6, DAY)
+
+
+
+RETURN
+
+
+
+AVERAGEX(
+
+DATESBETWEEN(
+
+'Date'[Date],
+
+StartDate,
+
+EndDate),
+
+[Total Sales])
+
+
+
+###### TABLE FUNCTIONS
+----------------------
+
+
+Sales Weekdays = 
+CALCULATE( [Total Sales],
+	FILTER( Dates, Dates[Weekend - Weekday] = "Weekday" ) )
+
+
+
+Total Sales (Weekday) = 
+
+SUMX(
+FILTER(
+    'Internet Sales',
+    RELATED('Date'[DayNumberOfWeek]) >1 &&
+    RELATED('Date'[DayNumberOfWeek]) < 7),
+    [Total Sales])
+	
+	
+
+MTD Sales (Custom) = 
+
+CALCULATE(
+[Total Sales],
+FILTER(
+ALL('Date'),
+'Date'[CalendarYear] = MAX('Date'[CalendarYear]) &&
+'Date'[MonthNumberOfYear] = MAX('Date'[MonthNumberOfYear]) &&
+'Date'[Date] <= MAX('Date'[Date])))
+
+
+
+****@@@@@@ Month to Date for All Previous Years
+****@@@@@@ Cartesian Table for RM Strip Summary Report
+MTD Sales (Custom) = 
+VAR CurrCalendarYear = MAX('Date'[CalendarYear])
+VAR CurrMonthNumber = MAX('Date'[MonthNumberOfYear])
+VAR CurrMaxDate = MAX('Date'[Date])
+
+RETURN
+
+CALCULATE(
+[Total Sales],
+FILTER(
+ALL('Date'),
+'Date'[CalendarYear] = CurrCalendarYear &&
+'Date'[MonthNumberOfYear] = CurrMonthNumber &&
+'Date'[Date] <= CurrMaxDate ))
+
+
+
+
+
+
+
+Total Days in Year = 
+CALCULATE(
+    [Total Days],
+    ALLEXCEPT(
+        'Date',
+        'Date'[Calendar Year]))
+		
+		
+		
+Total Days = COUNTROWS('Date')
+
+
+HASONEVALUE = HASONEVALUE('Date'[EnglishMonthName])
+
+
+MTD Sales (Custom) = 
+VAR CurrCalendarYear = MAX('Date'[CalendarYear])
+VAR CurrMonthNumber = MAX('Date'[MonthNumberOfYear])
+VAR CurrMaxDate = MAX('Date'[Date])
+RETURN
+IF(
+HASONEVALUE('Date'[EnglishMonthName]),
+CALCULATE(
+[Total Sales],
+FILTER(
+ALL('Date'),
+'Date'[CalendarYear] = CurrCalendarYear &&
+'Date'[MonthNumberOfYear] = CurrMonthNumber &&
+'Date'[Date] <= CurrMaxDate )),
+BLANK())
+
+
+
+
+
+
+
+Rolling 12 Month Sales = 
+VAR StartDate = NEXTDAY(SAMEPERIODLASTYEAR(LASTDATE('Date'[Date])))
+VAR EndDate = LASTDATE('Date'[Date])
+
+RETURN
+
+CALCULATE(
+    [Total Sales],
+    DATESBETWEEN(
+        'Date'[Date],
+        StartDate,
+        EndDate))
+
+
+Running Total (All Time) =
+// Return [total sales] for all days prior to the current filter context
+VAR CurrDate = LASTDATE('Date'[Date])
+
+RETURN
+
+CALCULATE(
+[Total Sales],
+FILTER(
+ALL('Date'),
+'Date'[Date] <= CurrDate) )
+
+
+
+
+Running Total (All Time) = 
+VAR CurrDate = LASTDATE('Date'[date])
+RETURN
+
+CALCULATE(
+    [Total Sales],
+    FILTER(
+        ALL('Date'),
+        'Date'[Date] <= CurrDate)
+    )
+	
+	
+	
+Running Total (All Time) = 
+VAR CurrDate = MAXDATE('Date'[date])
+RETURN
+
+CALCULATE(
+    [Total Sales],
+    FILTER(
+        ALL('Date'),
+        'Date'[Date] <= CurrDate)
+    )
+
+
+
+
+
+Create Bridge Table in DAX
+
+Bridge Table =
+DISTINCT(
+	UNION(
+		SUMMARIZE(
+			'Sales',
+			'Sales'[PrimEmployeeKey]),
+		SUMMARIZE(
+			'Sales Person Bridge',
+			'Sales Person Bridge'[EmployeeKey]))
+)
+
+
+
+*****@@@@ Cartesian Table
+*****@@@@ RM Servicing Strip Transaction for every day of the month from begining til now.
+DimSalesPeople =
+
+CROSSJOIN(
+
+DISTINCT(
+
+UNION(
+
+SUMMARIZE(
+
+'Sales',
+
+'Sales'[PrimEmployeeKey]),
+
+SUMMARIZE(
+
+'Sales Person Bridge',
+
+'Sales Person Bridge'[EmployeeKey]))),
+
+SUMMARIZE(
+
+'DATE',
+
+'DATE'[DATE]))
+
+
+
+
+
+
+*****@@@@ Weighted Allocation =
+Total Sales w Allocation = 
+SUMX(
+    'Sales Person Bridge',
+    CALCULATE(SUM('Sales'[SalesAmount])) * 'Sales Person Bridge'[ALLOCATION])
+
+
+*****@@@@ Weighted Allocation =
+Total Sales w Allocation = 
+SUMX(
+    'Sales Person Bridge',
+    [Total Sales]) * 'Sales Person Bridge'[ALLOCATION])
+	
+	
+	
+	
+*****@@@@	
+Forecasted Sales = 
+VAR CurrentYear = MAX('Date'[Year])
+VAR WeightedAllocation = 
+        DIVIDE(
+            [Days in FC],
+            [Days in Year])
+RETURN
+
+        WeightedAllocation
+        *
+        CALCULATE(
+            SUM('Forecasted Sales Data'[Forecast] ) ,
+           'Forecasted Sales Data'[Year] = CurrentYear )
+
+
+	
+*****@@@@ RM Strip Summary
+Close Price (EOM) = 
+CALCULATE(
+    [Close Price],
+    LASTDATE('Date'[Date]))
+
+
+
+
+
+Close Price (EoM) Non Blank = 
+CALCULATE(
+    [Close Price],
+    LASTNONBLANK(
+        'Date'[Date],
+        [Close Price] ) )
+		
+		
+		
+Close Price (EOM) = 
+CALCULATE(
+    [Close Price],
+    LASTDATE('Date'[Date]))
+
+    
+	
+
+Close Price (BoM) Non Blank = 
+CALCULATE(
+    [Close Price],
+    FIRSTNONBLANK(
+        'Date'[Date],
+        [Close Price]))
+		
+		
+		
+Close Price (BOM) = 
+CALCULATE(
+    [Close Price],
+    FIRSTDATE(
+        'Date'[Date]))
+		
+		
+		
+Close Price = 
+SUM('MSFT Stock Price'[Close]) 
+
+
+
+
+Opening Balance
+Close Price (OBM Non Blank) = 
+
+CALCULATE(
+    [Close Price],
+
+    LASTNONBLANK(
+        PARALLELPERIOD(
+            'Date'[Date],
+            -1,
+            MONTH),
+            [Close Price])) 
+
+
+
+Opening Balance
+Close Price (OBM Non Blank) = 
+
+CALCULATE(
+    [Close Price],
+
+    LASTNONBLANK(
+        PREVIOUSMONTH(
+            'Date'[Date],
+            ))
+
+
+
+
+
+
+
+Dynamic Security RLS
+
+Completed Labs
+
+C:\Users\Charles.Welbeck\Documents\Power BI Pragmaticworks Dax Boot Camp\Dax Boot Camp\Completed Labs\Module 15
+
+Module 14
+
+'Sales Territory'[SalesTerritoryKey] = 
+LOOKUPVALUE ('SecurityTable'[Sales Territory ID], 
+               'SecurityTable'[Login Id], USERNAME(), 
+               'SecurityTable'[Sales Territory ID], 
+               'Sales Territory'[SalesTerritoryKey])
+			   
+			   
+			   
+
+
+*****@@@@ Performance Power BI
+xVelocity AKA Vertipak Analyzer
+
+
+*****@@@@ Power BI Helper RADACAD
+
+
+
+
+
+
+
+
+
